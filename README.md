@@ -1,5 +1,5 @@
 
-![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-0.32.0-blue.svg)](https://registry.terraform.io/modules/saefty/aws-health-aware/1.0.1) ![Terraform Version](https://img.shields.io/badge/Terraform-1.3+-green.svg)
+![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-0.32.0-blue.svg)](https://registry.terraform.io/modules/saefty/aws-health-aware/1.0.2) ![Terraform Version](https://img.shields.io/badge/Terraform-1.3+-green.svg)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ![](https://github.com/aws-samples/aws-health-aware/blob/main/readme-images/aha_banner.png?raw=1)
