@@ -25,7 +25,7 @@ STACKS = $(shell find . -not -path "*/\.*" -iname "*.tf" | sed -E "s|/[^/]+$$||"
 ROOT_DIR := $(shell pwd)
 
 REMOTES := $(shell git config --get remote.origin.url)
-REPO_NAME := $(shell basename -s .git $(REMOTES))
+REPO_NAME := saefty/$(shell basename -s .git $(REMOTES))
 
 all: fmt validate tflint tfsec
 
