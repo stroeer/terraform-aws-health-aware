@@ -24,8 +24,7 @@ NEXT_TAG 			:= v$(NEXT_VERSION)
 STACKS = $(shell find . -not -path "*/\.*" -iname "*.tf" | sed -E "s|/[^/]+$$||" | sort --unique)
 ROOT_DIR := $(shell pwd)
 
-REMOTES := $(shell git config --get remote.origin.url)
-REPO_NAME := saefty/$(shell basename -s .git $(REMOTES))
+REPO_NAME := 636721801
 
 all: fmt validate tflint tfsec
 
