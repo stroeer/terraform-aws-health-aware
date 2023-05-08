@@ -16,26 +16,25 @@ locals {
   secondary_region = var.aha_secondary_region == "" ? var.aha_primary_region : var.aha_secondary_region
 }
 
-# Comment below - if needed to use s3_bucket, s3_key for consistency with cf
-locals {
-  source_files = ["${path.module}/../../handler.py", "${path.module}/../../messagegenerator.py"]
-}
-data "template_file" "t_file" {
-  count    = length(local.source_files)
-  template = file(element(local.source_files, count.index))
+resource "null_resource" "package" {
+  provisioner "local-exec" {
+    command = "rm -rf dist lambda_function.zip && mkdir -p dist && cp -r  ${path.module}/../../src/* dist/ && pip3 install --only-binary=:all: --platform manylinux2014_x86_64 --implementation cp -r ${path.module}/../../src/requirements.txt -t dist"
+  }
+
+  triggers = {
+    dependencies_versions = sha1(join("", [
+      for f in fileset("${path.module}/../../src/", "*") : filesha1("${path.module}/../../src/${f}")
+    ]))
+    source_versions = sha1(join("", [
+      for f in fileset("${path.module}/../../src/", "*") : filesha1("${path.module}/../../src/${f}")
+    ]))
+  }
 }
 
 data "archive_file" "lambda_zip" {
   type        = "zip"
   output_path = "lambda_function.zip"
-  source {
-    filename = basename(local.source_files[0])
-    content  = data.template_file.t_file.0.rendered
-  }
-  source {
-    filename = basename(local.source_files[1])
-    content  = data.template_file.t_file.1.rendered
-  }
+  source_dir  = "dist"
 }
 
 variable "aha_primary_region" {
@@ -115,6 +114,12 @@ variable "configuration" {
     slack_hook_url = string
   }))
   default = null
+}
+
+variable "default_channel" {
+  description = "Default slack channel to send events to"
+  type        = string
+  default     = ""
 }
 
 

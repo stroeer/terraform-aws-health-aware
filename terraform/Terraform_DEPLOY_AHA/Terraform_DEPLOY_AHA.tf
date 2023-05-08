@@ -84,29 +84,6 @@ resource "aws_dynamodb_tag" "AHA-GlobalDynamoDBTable-Additional-tags" {
   value        = each.value
 }
 
-# Secrets - AssumeRoleSecret
-resource "aws_secretsmanager_secret" "AssumeRoleArn" {
-  count                   = var.ManagementAccountRoleArn == "" ? 0 : 1
-  name                    = "AssumeRoleArn"
-  description             = "Management account role for AHA to assume"
-  recovery_window_in_days = 0
-  tags = {
-    "AssumeRoleArn" = ""
-    "Name"          = "AHA-AssumeRoleArn"
-  }
-  dynamic "replica" {
-    for_each = var.aha_secondary_region == "" ? [] : [1]
-    content {
-      region = var.aha_secondary_region
-    }
-  }
-}
-resource "aws_secretsmanager_secret_version" "AssumeRoleArn" {
-  count         = var.ManagementAccountRoleArn == "" ? 0 : 1
-  secret_id     = aws_secretsmanager_secret.AssumeRoleArn.*.id[count.index]
-  secret_string = var.ManagementAccountRoleArn
-}
-
 # aws_lambda_function - AHA-LambdaFunction - Primary region
 resource "aws_lambda_function" "AHA-LambdaFunction-PrimaryRegion" {
   description      = "Lambda function that runs AHA"
@@ -120,7 +97,7 @@ resource "aws_lambda_function" "AHA-LambdaFunction-PrimaryRegion" {
   #    s3_key                         = var.S3Key
   reserved_concurrent_executions = -1
   role                           = aws_iam_role.AHA-LambdaExecutionRole.arn
-  runtime                        = "python3.10"
+  runtime                        = "python3.9"
 
   environment {
     variables = {
@@ -133,6 +110,8 @@ resource "aws_lambda_function" "AHA-LambdaFunction-PrimaryRegion" {
       "EVENT_BUS_NAME"                       = var.EventBusName
       "EVENT_BUS_ENDPOINT"                   = var.EventBusEndpoint
       "MANAGEMENT_ACCOUNT_ROLE_ARN"          = var.ManagementAccountRoleArn
+      "ACCOUNT_IDS"                          = "None"
+      "DEFAULT_CHANNEL"                      = var.default_channel
       CONFIG_SSM_PARAMETER_NAME              = aws_ssm_parameter.config_primary.name
       PARAMETERS_SECRETS_EXTENSION_HTTP_PORT = "2273"
     }
@@ -183,7 +162,7 @@ resource "aws_lambda_function" "AHA-LambdaFunction-SecondaryRegion" {
   #    s3_key                         = var.S3Key
   reserved_concurrent_executions = -1
   role                           = aws_iam_role.AHA-LambdaExecutionRole.arn
-  runtime                        = "python3.10"
+  runtime                        = "python3.9"
 
   environment {
     variables = {
@@ -194,7 +173,10 @@ resource "aws_lambda_function" "AHA-LambdaFunction-SecondaryRegion" {
       "REGIONS"                              = var.Regions
       "MANAGEMENT_ROLE_ARN"                  = var.ManagementAccountRoleArn
       "EVENT_BUS_NAME"                       = var.EventBusName
+      "EVENT_BUS_ENDPOINT"                   = var.EventBusEndpoint
       "MANAGEMENT_ACCOUNT_ROLE_ARN"          = var.ManagementAccountRoleArn
+      "ACCOUNT_IDS"                          = "None"
+      "DEFAULT_CHANNEL"                      = var.default_channel
       CONFIG_SSM_PARAMETER_NAME              = aws_ssm_parameter.config_secondary.name
       PARAMETERS_SECRETS_EXTENSION_HTTP_PORT = "2273"
     }

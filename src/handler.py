@@ -1,7 +1,7 @@
-import boto3
 import json
 import os
 import socket
+import sys
 from datetime import datetime, timedelta
 from urllib.request import Request, urlopen, URLError, HTTPError
 
@@ -15,6 +15,9 @@ from messagegenerator import get_message_for_slack, get_org_message_for_slack, g
     get_org_message_for_chime, \
     get_message_for_teams, get_org_message_for_teams, get_message_for_email, get_org_message_for_email, \
     get_detail_for_eventbridge
+
+sys.path.insert(0, f'{os.getcwd()}/vendor')
+sys.path.insert(0, f'{os.getcwd()}')
 
 # query active health API endpoint
 health_dns = socket.gethostbyname_ex('global.health.amazonaws.com')
@@ -56,13 +59,16 @@ def get_account_name(account_id):
         account_name = account_id
     return account_name
 
-def get_hook_url_for_account(account_id, configuration, default_hook_url):
-    hook_url = [cfg['slack_hook_url'] for cfg in configuration if account_id in cfg['accounts']]
+
+def get_hook_url_for_account(account_id, configuration):
+    print(configuration)
+    hook_url = [cfg['slack_hook_url'] for cfg in configuration if str(account_id) in cfg['accounts']]
     if len(hook_url) > 0:
         return hook_url[0]
-    return default_hook_url
+    return os.environ.get('DEFAULT_CHANNEL', 'None')
 
-def send_alert(event_details, affected_accounts, affected_entities, event_type):
+
+def send_alert(event_details, affected_accounts, affected_accounts_details, affected_entities, event_type):
     event_bus_name = get_secrets()["eventbusname"]
     eventbus_endpoint = get_secrets()["eventbus_endpoint"]
     configuration = get_secrets()["channel_configuration"]
@@ -70,7 +76,7 @@ def send_alert(event_details, affected_accounts, affected_entities, event_type):
     # get the list of resources from the array of affected entities
     resources = get_resources_from_entities(affected_entities)
 
-
+    print(f"affected accounts: {affected_accounts}")
     if "None" not in event_bus_name:
         try:
             print("Sending the alert to Event Bridge")
@@ -82,12 +88,14 @@ def send_alert(event_details, affected_accounts, affected_entities, event_type):
             print("Server connection failed: ", e.reason)
             pass
     for account in affected_accounts:
-        channel = get_hook_url_for_account(account, configuration, None)
+        channel = get_hook_url_for_account(account, configuration)
+        print(f"Sending the alert to account: {account} {channel}")
         if "hooks.slack.com/services" in channel:
             try:
                 print("Sending the alert to Slack Webhook Channel")
                 send_to_slack(
-                    get_message_for_slack(event_details, event_type, affected_accounts, resources, slack_webhook="webhook"),
+                    get_message_for_slack(event_details, event_type, affected_accounts_details, resources,
+                                          slack_webhook="webhook"),
                     channel)
             except HTTPError as e:
                 print("Got an error while sending message to Slack: ", e.code, e.reason)
@@ -97,7 +105,7 @@ def send_alert(event_details, affected_accounts, affected_entities, event_type):
         if "hooks.slack.com/workflows" in channel:
             try:
                 print("Sending the alert to Slack Workflows Channel")
-                send_to_slack(get_message_for_slack(event_details, event_type, affected_accounts, resources,
+                send_to_slack(get_message_for_slack(event_details, event_type, affected_accounts_details, resources,
                                                     slack_webhook="workflow"), channel)
             except HTTPError as e:
                 print("Got an error while sending message to Slack: ", e.code, e.reason)
@@ -107,7 +115,8 @@ def send_alert(event_details, affected_accounts, affected_entities, event_type):
         if "office.com/webhook" in channel:
             try:
                 print("Sending the alert to Teams")
-                send_to_teams(get_message_for_teams(event_details, event_type, affected_accounts, resources), channel)
+                send_to_teams(get_message_for_teams(event_details, event_type, affected_accounts_details, resources),
+                              channel)
             except HTTPError as e:
                 print("Got an error while sending message to Teams: ", e.code, e.reason)
             except URLError as e:
@@ -116,7 +125,8 @@ def send_alert(event_details, affected_accounts, affected_entities, event_type):
         if "hooks.chime.aws/incomingwebhooks" in channel:
             try:
                 print("Sending the alert to Chime channel")
-                send_to_chime(get_message_for_chime(event_details, event_type, affected_accounts, resources), channel)
+                send_to_chime(get_message_for_chime(event_details, event_type, affected_accounts_details, resources),
+                              channel)
             except HTTPError as e:
                 print("Got an error while sending message to Chime: ", e.code, e.reason)
             except URLError as e:
@@ -124,7 +134,8 @@ def send_alert(event_details, affected_accounts, affected_entities, event_type):
                 pass
 
 
-def send_org_alert(event_details, affected_org_accounts, affected_org_entities, event_type):
+def send_org_alert(event_details, affected_org_accounts, affected_org_accounts_details, affected_org_entities,
+                   event_type):
     configuration = get_secrets()["channel_configuration"]
     event_bus_name = get_secrets()["eventbusname"]
     eventbus_endpoint = get_secrets()["eventbus_endpoint"]
@@ -132,6 +143,7 @@ def send_org_alert(event_details, affected_org_accounts, affected_org_entities, 
     # get the list of resources from the array of affected entities
     resources = get_resources_from_entities(affected_org_entities)
 
+    print(f"affected accounts: {affected_org_accounts}")
     if "None" not in event_bus_name:
         try:
             print("Sending the org alert to Event Bridge")
@@ -144,12 +156,13 @@ def send_org_alert(event_details, affected_org_accounts, affected_org_entities, 
             print("Server connection failed: ", e.reason)
             pass
     for account in affected_org_accounts:
-        channel = get_hook_url_for_account(account, configuration, None)
+        channel = get_hook_url_for_account(account, configuration)
+        print(f"Sending the alert to account: {account} {channel}")
         if "hooks.slack.com/services" in channel:
             try:
                 print("Sending the alert to Slack Webhook Channel")
                 send_to_slack(
-                    get_org_message_for_slack(event_details, event_type, affected_org_accounts, resources,
+                    get_org_message_for_slack(event_details, event_type, affected_org_accounts_details, resources,
                                               slack_webhook="webhook"),
                     channel)
             except HTTPError as e:
@@ -161,7 +174,7 @@ def send_org_alert(event_details, affected_org_accounts, affected_org_entities, 
             try:
                 print("Sending the alert to Slack Workflow Channel")
                 send_to_slack(
-                    get_org_message_for_slack(event_details, event_type, affected_org_accounts, resources,
+                    get_org_message_for_slack(event_details, event_type, affected_org_accounts_details, resources,
                                               slack_webhook="workflow"),
                     channel)
             except HTTPError as e:
@@ -173,7 +186,7 @@ def send_org_alert(event_details, affected_org_accounts, affected_org_entities, 
             try:
                 print("Sending the alert to Teams")
                 send_to_teams(
-                    get_org_message_for_teams(event_details, event_type, affected_org_accounts, resources),
+                    get_org_message_for_teams(event_details, event_type, affected_org_accounts_details, resources),
                     channel)
             except HTTPError as e:
                 print("Got an error while sending message to Teams: ", e.code, e.reason)
@@ -184,7 +197,7 @@ def send_org_alert(event_details, affected_org_accounts, affected_org_entities, 
             try:
                 print("Sending the alert to Chime channel")
                 send_to_chime(
-                    get_org_message_for_chime(event_details, event_type, affected_org_accounts, resources),
+                    get_org_message_for_chime(event_details, event_type, affected_org_accounts_details, resources),
                     channel)
             except HTTPError as e:
                 print("Got an error while sending message to Chime: ", e.code, e.reason)
@@ -424,9 +437,11 @@ def update_org_ddb(event_arn, str_update, status_code, event_details, affected_o
                 f"{get_account_name(account_id)} ({account_id})" for account_id in affected_org_accounts]
             # send to configured endpoints
             if status_code != "closed":
-                send_org_alert(event_details, affected_org_accounts_details, affected_org_entities, event_type="create")
+                send_org_alert(event_details, affected_org_accounts, affected_org_accounts_details,
+                               affected_org_entities, event_type="create")
             else:
-                send_org_alert(event_details, affected_org_accounts_details, affected_org_entities,
+                send_org_alert(event_details, affected_org_accounts, affected_org_accounts_details,
+                               affected_org_entities,
                                event_type="resolve")
 
         else:
@@ -452,10 +467,12 @@ def update_org_ddb(event_arn, str_update, status_code, event_details, affected_o
                     f"{get_account_name(account_id)} ({account_id})" for account_id in affected_org_accounts]
                 # send to configured endpoints
                 if status_code != "closed":
-                    send_org_alert(event_details, affected_org_accounts_details, affected_org_entities,
+                    send_org_alert(event_details, affected_org_accounts, affected_org_accounts_details,
+                                   affected_org_entities,
                                    event_type="create")
                 else:
-                    send_org_alert(event_details, affected_org_accounts_details, affected_org_entities,
+                    send_org_alert(event_details, affected_org_accounts, affected_org_accounts_details,
+                                   affected_org_entities,
                                    event_type="resolve")
             else:
                 print("No new updates found, checking again in 1 minute.")
@@ -510,9 +527,11 @@ def update_ddb(event_arn, str_update, status_code, event_details, affected_accou
 
             # send to configured endpoints
             if status_code != "closed":
-                send_alert(event_details, affected_accounts_details, affected_entities, event_type="create")
+                send_alert(event_details, affected_accounts, affected_accounts_details, affected_entities,
+                           event_type="create")
             else:
-                send_alert(event_details, affected_accounts_details, affected_entities, event_type="resolve")
+                send_alert(event_details, affected_accounts, affected_accounts_details, affected_entities,
+                           event_type="resolve")
         else:
             item = response['Item']
             if item['lastUpdatedTime'] != str_update and (item['statusCode'] != status_code or
@@ -536,22 +555,26 @@ def update_ddb(event_arn, str_update, status_code, event_details, affected_accou
                     f"{get_account_name(account_id)} ({account_id})" for account_id in affected_accounts]
                 # send to configured endpoints
                 if status_code != "closed":
-                    send_alert(event_details, affected_accounts_details, affected_entities, event_type="create")
+                    send_alert(event_details, [account_id for account_id in affected_accounts],
+                               affected_accounts_details, affected_entities, event_type="create")
                 else:
-                    send_alert(event_details, affected_accounts_details, affected_entities, event_type="resolve")
+                    send_alert(event_details, [account_id for account_id in affected_accounts],
+                               affected_accounts_details, affected_entities, event_type="resolve")
             else:
                 print("No new updates found, checking again in 1 minute.")
 
 
 def get_secrets():
+    configuration = retrieve_extension_value(('/systemsmanager/parameters/get/?name=' + os.environ.get('CONFIG_SSM_PARAMETER_NAME', 'None')))['Parameter']['Value']
+
     secrets = {
-        "channel_configuration": retrieve_extension_value(('/systemsmanager/parameters/get/?name=' + os.environ.get('CONFIG_SSM_PARAMETER_NAME', 'None')))['Parameter']['Value'],
+        "channel_configuration": json.loads(configuration) if configuration else [],
         "eventbusname": os.environ.get('EVENT_BUS_NAME', None),
-        "eventbus_endpoint":  os.environ.get('EVENT_BUS_ENDPOINT', None),
+        "eventbus_endpoint": os.environ.get('EVENT_BUS_ENDPOINT', None),
         "ahaassumerole": os.environ.get('MANAGEMENT_ACCOUNT_ROLE_ARN', None),
     }
-        # uncomment below to verify secrets values
-        # print("Secrets: ",secrets)
+    # uncomment below to verify secrets values
+    # print("Secrets: ",secrets)
     return secrets
 
 
@@ -729,20 +752,20 @@ def describe_org_event_details(health_client, event_arn, affected_org_accounts):
         return response
 
 
-def eventbridge_generate_entries(message, resources, event_bus, eventbus_endpoint):
+def eventbridge_generate_entries(message, resources, event_bus):
     return [{'Source': 'aha', 'DetailType': 'AHA Event', 'Resources': resources, 'Detail': json.dumps(message),
-             'EventBusName': event_bus, 'EndpointId': eventbus_endpoint}, ]
+             'EventBusName': event_bus}, ]
 
 
 def send_to_eventbridge(message, event_type, resources, event_bus, eventbus_endpoint):
     print("Sending response to Eventbridge - event_type, event_bus", event_type, event_bus)
     client = boto3.client('events')
 
-    entries = eventbridge_generate_entries(message, resources, event_bus, eventbus_endpoint)
+    entries = eventbridge_generate_entries(message, resources, event_bus)
 
     print("Sending entries: ", entries)
 
-    response = client.put_events(Entries=entries)
+    response = client.put_events(Entries=entries, EndpointId=eventbus_endpoint)
     print("Response from eventbridge is:", response)
 
 

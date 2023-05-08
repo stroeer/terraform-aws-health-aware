@@ -11,7 +11,6 @@ import time
 def get_message_for_slack(event_details, event_type, affected_accounts, affected_entities, slack_webhook):
     message = ""
     summary = ""
-    print(event_details)
     event_category = event_details['successfulSet'][0]['event']['eventTypeCategory']
     if slack_webhook == "webhook":
         if len(affected_entities) >= 1:
@@ -144,6 +143,7 @@ def get_detail_for_eventbridge(event_details, affected_entities):
 def get_org_message_for_slack(event_details, event_type, affected_org_accounts, affected_org_entities, slack_webhook):
     message = ""
     summary = ""
+    event_category = event_details['successfulSet'][0]['event']['eventTypeCategory']
     if slack_webhook == "webhook":
         if len(affected_org_entities) >= 1:
             affected_org_entities = "\n".join(affected_org_entities)
@@ -155,7 +155,7 @@ def get_org_message_for_slack(event_details, event_type, affected_org_accounts, 
             affected_org_accounts = "All accounts\nin region"
         if event_type == "create":
             summary += (
-                f":rotating_light:*[NEW] AWS Health reported an issue with the {event_details['successfulSet'][0]['event']['service'].upper()} service in "
+                f":rotating_light:*[NEW] AWS Health reported an {event_category} with the {event_details['successfulSet'][0]['event']['service'].upper()} service in "
                 f"the {event_details['successfulSet'][0]['event']['region'].upper()} region.*"
             )
             message = {

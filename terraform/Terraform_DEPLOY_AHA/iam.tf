@@ -97,23 +97,6 @@ data "aws_iam_policy_document" "AHA-LambdaPolicy-Document" {
     ]
   }
 
-
-  dynamic "statement" {
-    for_each = var.ManagementAccountRoleArn == "" ? [] : [1]
-    content {
-      effect = "Allow"
-      actions = [
-        "secretsmanager:GetResourcePolicy",
-        "secretsmanager:DescribeSecret",
-        "secretsmanager:ListSecretVersionIds",
-        "secretsmanager:GetSecretValue",
-      ]
-      resources = [
-        aws_secretsmanager_secret.AssumeRoleArn[0].arn,
-        "arn:aws:secretsmanager:${local.secondary_region}:${data.aws_caller_identity.current.account_id}:secret:${element(split(":", aws_secretsmanager_secret.AssumeRoleArn[0].arn), 6)}"
-      ]
-    }
-  }
   dynamic "statement" {
     for_each = var.EventBusName == "" ? [] : [1]
     content {
