@@ -95,7 +95,7 @@ release: check-git-branch bump-version ## Releases a new module version
     		-H "Authorization: token ${GITHUB_TOKEN}" 								\
     		-X POST 																\
     		-H "Accept: application/vnd.github.v3+json"								\
-    		https://api.github.com/repos/$(basename -s .git $(git config --get remote.origin.url))}/releases \
+    		https://api.github.com/repos/$(basename -s .git $(git config --get remote.origin.url))/releases \
     		-d "{\"tag_name\":\"$(NEXT_TAG)\",\"generate_release_notes\":true}"; 									\
 	fi;
 
