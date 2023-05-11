@@ -24,8 +24,6 @@ NEXT_TAG 			:= v$(NEXT_VERSION)
 STACKS = $(shell find . -not -path "*/\.*" -iname "*.tf" | sed -E "s|/[^/]+$$||" | sort --unique)
 ROOT_DIR := $(shell pwd)
 
-REPO_NAME := 636721801
-
 all: fmt validate tflint tfsec
 
 .PHONY: fmt
@@ -91,15 +89,6 @@ release: check-git-branch bump-version ## Releases a new module version
 	git tag -a $(NEXT_TAG) -m "$(NEXT_TAG)"
 	git push origin $(NEXT_TAG)
 	git push
-	# create GH release if GITHUB_TOKEN is set
-	if [ ! -z "${GITHUB_TOKEN}" ] ; then 												\
-    	curl 																		\
-    		-H "Authorization: token ${GITHUB_TOKEN}" 								\
-    		-X POST 																\
-    		-H "Accept: application/vnd.github.v3+json"								\
-    		https://api.github.com/repos/$(REPO_NAME)/releases \
-    		-d "{\"tag_name\":\"$(NEXT_TAG)\",\"generate_release_notes\":true}"; 									\
-	fi;
 
 .PHONY: help
 help: ## Display this help screen
