@@ -18,15 +18,15 @@ locals {
 
 resource "null_resource" "package" {
   provisioner "local-exec" {
-    command = "rm -rf dist lambda_function.zip && mkdir -p dist && cp -r  ${path.module}/../../src/* dist/ && pip3 install --only-binary=:all: --platform manylinux2014_x86_64 --implementation cp -r ${path.module}/../../src/requirements.txt -t dist"
+    command = "rm -rf dist lambda_function.zip && mkdir -p dist && cp -r  ${path.module}/../src/* dist/ && pip3 install --only-binary=:all: --platform manylinux2014_x86_64 --implementation cp -r ${path.module}/../src/requirements.txt -t dist"
   }
 
   triggers = {
     dependencies_versions = sha1(join("", [
-      for f in fileset("${path.module}/../../src/", "*") : filesha1("${path.module}/../../src/${f}")
+      for f in fileset("${path.module}/../src/", "*") : filesha1("${path.module}/../src/${f}")
     ]))
     source_versions = sha1(join("", [
-      for f in fileset("${path.module}/../../src/", "*") : filesha1("${path.module}/../../src/${f}")
+      for f in fileset("${path.module}/../src/", "*") : filesha1("${path.module}/../src/${f}")
     ]))
   }
 }
