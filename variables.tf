@@ -18,23 +18,24 @@ locals {
 
 resource "null_resource" "package" {
   provisioner "local-exec" {
-    command = "rm -rf dist lambda_function.zip && mkdir -p dist && cp -r  ${path.module}/src/* dist/ && pip3 install --only-binary=:all: --platform manylinux2014_x86_64 --implementation cp -r ${path.module}/src/requirements.txt -t dist"
+    command = "rm -rf ${path.module}/dist ${path.module}/lambda_function.zip && mkdir -p ${path.module}/dist && cp -r  ${path.module}/src/* ${path.module}/dist/ && pip3 install --only-binary=:all: --platform manylinux2014_x86_64 --implementation cp -r ${path.module}/src/requirements.txt -t ${path.module}/dist"
   }
 
   triggers = {
     dependencies_versions = sha1(join("", [
-      for f in fileset("${path.module}/src/", "*") : filesha1("${path.module}/src/${f}")
+      for f in fileset("${path.module}/src/", "*.txt") : filesha1("${path.module}/src/${f}")
     ]))
     source_versions = sha1(join("", [
-      for f in fileset("${path.module}/src/", "*") : filesha1("${path.module}/src/${f}")
+      for f in fileset("${path.module}/src/", "*.py") : filesha1("${path.module}/src/${f}")
     ]))
   }
 }
 
 data "archive_file" "lambda_zip" {
+  depends_on  = [null_resource.package]
   type        = "zip"
   output_path = "lambda_function.zip"
-  source_dir  = "dist"
+  source_dir  = "${path.module}/dist"
 }
 
 variable "aha_primary_region" {

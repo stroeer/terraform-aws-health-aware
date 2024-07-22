@@ -2,6 +2,8 @@
 # AHA Lambda Function package
 lambda_function.zip
 
+.idea
+dist
 # ---> Terraform
 # Local .terraform directories
 **/.terraform/*
