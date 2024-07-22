@@ -22,6 +22,9 @@ resource "null_resource" "package" {
   }
 
   triggers = {
+    dist_files = sha1(join("", [
+      for f in fileset("${path.module}/dist/", "*") : filesha1("${path.module}/dist/${f}")
+    ]))
     dependencies_versions = sha1(join("", [
       for f in fileset("${path.module}/src/", "*.txt") : filesha1("${path.module}/src/${f}")
     ]))
