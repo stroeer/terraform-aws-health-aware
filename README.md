@@ -1,5 +1,5 @@
 
-[![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-1.0.17-blue.svg)](https://registry.terraform.io/modules/saefty/aws-health-aware/1.0.17) ![Terraform Version](https://img.shields.io/badge/Terraform-1.3+-green.svg)
+[![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-1.0.18-blue.svg)](https://registry.terraform.io/modules/saefty/aws-health-aware/1.0.18) ![Terraform Version](https://img.shields.io/badge/Terraform-1.3+-green.svg)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ![](https://github.com/aws-samples/aws-health-aware/blob/main/readme-images/aha_banner.png?raw=1)
@@ -89,7 +89,7 @@ AHA can send to multiple endpoints (webhook URLs, Email or EventBridge). To use 
 **You will need to have access to add a new channel and app to your Slack Workspace**.
 
 *Webhook*
-1. Create a new [channel](https://slack.com/help/articles/201.0.1797-Create-a-channel) for events (i.e. aws_events)
+1. Create a new [channel](https://slack.com/help/articles/201.0.1897-Create-a-channel) for events (i.e. aws_events)
 2. In your browser go to: workspace-name.slack.com/apps where workspace-name is the name of your Slack Workspace.
 3. In the search bar, search for: *Incoming Webhooks* and **click** on it.
 4. **Click** on *Add to Slack*.
@@ -99,7 +99,7 @@ AHA can send to multiple endpoints (webhook URLs, Email or EventBridge). To use 
 
 *Workflow*
 
-1. Create a new [channel](https://slack.com/help/articles/201.0.1797-Create-a-channel) for events (i.e. aws_events)
+1. Create a new [channel](https://slack.com/help/articles/201.0.1897-Create-a-channel) for events (i.e. aws_events)
 2. Within Slack **click** on your workspace name drop down arrow in the upper left. **click on Tools > Workflow Builder**
 3. **Click** Create in the upper right hand corner of the Workflow Builder and give your workflow a name **click** next.
 4. **Click** on *select* next to **Webhook** and then **click** *add variable* add the following variables one at a time in the *Key* section. All *data type* will be *text*:
@@ -298,7 +298,7 @@ See: [Using AWS Health Delegated Administrator with AHA](#using-aws-health-deleg
 
 There are 3 available ways to deploy AHA, all are done via the same Terraform template to make deployment as easy as possible.
 
-**NOTE: ** AHA code is tested with Terraform version v1.0.17, please make sure to have minimum terraform verson of v1.0.17 installed.
+**NOTE: ** AHA code is tested with Terraform version v1.0.18, please make sure to have minimum terraform verson of v1.0.18 installed.
 
 The 3 deployment methods for AHA are:
 
