@@ -82,7 +82,7 @@ check-git-branch: check-git-clean
 	git fetch --all --tags --prune
 	git checkout main
 
-release: check-git-branch bump documentation
+release: check-git-branch bump-version documentation
 	@if ! gh auth status > /dev/null 2>&1; then \
 		echo "GitHub CLI not authenticated. Please run 'gh auth login'."; \
 		exit 1; \
