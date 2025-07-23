@@ -82,13 +82,18 @@ check-git-branch: check-git-clean
 	git fetch --all --tags --prune
 	git checkout main
 
-release: check-git-branch bump-version ## Releases a new module version
-	@echo "+ $@"
-	git add README.md
-	git commit -vsam "Bump version to $(NEXT_TAG)"
+release: check-git-branch bump documentation
+	@if ! gh auth status > /dev/null 2>&1; then \
+		echo "GitHub CLI not authenticated. Please run 'gh auth login'."; \
+		exit 1; \
+	fi
+	git add README.md docs/part1.md
+	git commit -vsam "Bump version to $(NEXT_TAG)" || true
 	git tag -a $(NEXT_TAG) -m "$(NEXT_TAG)"
 	git push origin $(NEXT_TAG)
 	git push
+	gh release create $(NEXT_TAG) README.md docs/part1.md --title "$(NEXT_RELEASE_NAME)" --notes "Release $(NEXT_RELEASE_NAME)"
+
 
 .PHONY: help
 help: ## Display this help screen
