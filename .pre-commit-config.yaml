@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.78.0
+    rev: c93cb4c14e8710ba80a9ad15407e1f7096174079 # v1.78.0
     hooks:
       - id: terraform_fmt
       - id: terraform_tflint
@@ -18,7 +18,7 @@ repos:
           - --args=-platform=linux_amd64
           - --args=-platform=darwin_amd64
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9 # v4.4.0
     hooks:
       - id: check-merge-conflict
       - id: trailing-whitespace
